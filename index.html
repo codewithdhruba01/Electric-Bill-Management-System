@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electricity Bill Management</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #billDetails {
+            margin-top: 20px; /* Space between form and table */
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Electricity Bill Management</h1>
+    <div class="container">
+        <h2>Add Bill</h2>
+        <form id="addBillForm">
+            <label for="billNumber">Bill Number (9 digits):</label>
+            <input type="text" id="billNumber" name="billNumber" maxlength="9" required>
+            <div id="billNumberError" class="error"></div>
+
+            <label for="name">Customer Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="units">Units Consumed:</label>
+            <input type="number" id="units" name="units" min="0" required>
+
+            <button type="button" onclick="addBill()">Add Bill</button>
+        </form>
+
+        <div id="billDetails">
+            <h2>Bill Details</h2>
+            <table id="billTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Bill Number</th>
+                        <th>Name</th>
+                        <th>Units</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+
+        <h2>Update Status</h2>
+        <label for="updateBillId">Bill ID:</label>
+        <input type="number" id="updateBillId" name="updateBillId" required>
+        <label for="updateStatus">New Status (Paid/Pending):</label>
+        <input type="text" id="updateStatus" name="updateStatus" required>
+        <button type="button" onclick="updateStatus()">Update Status</button>
+
+         <h2>Delete Bill</h2>
+        <label for="deleteBillId">Bill ID:</label>
+        <input type="number" id="deleteBillId" name="deleteBillId" required>
+        <button type="button" onclick="deleteBill()">Delete Bill</button>
+
+
+    </div>
+
+    <script>
+        function addBill() {
+            const billNumber = document.getElementById("billNumber").value;
+            const name = document.getElementById("name").value;
+            const units = document.getElementById("units").value;
+            const billNumberError = document.getElementById("billNumberError");
+
+            if (billNumber.length !== 9 || isNaN(billNumber)) {
+                billNumberError.textContent = "Please enter a valid 9-digit bill number.";
+                return; // Stop further execution
+            } else {
+              billNumberError.textContent = ""; // Clear any previous error message
+            }
+
+            fetch('/add_bill', {  // Replace with your server endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ billNumber, name, units })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadBills(); // Refresh the bill table
+                    document.getElementById("addBillForm").reset(); // Clear the form
+                    alert("Bill added successfully!");
+                } else {
+                    alert(data.message || "Error adding bill.");
+                }
+            });
+        }
+
+        function loadBills() {
+           fetch('/get_bills') // Replace with your server endpoint
+            .then(response => response.json())
+            .then(bills => {
+                const tableBody = document.getElementById("billTable").getElementsByTagName('tbody')[0];
+                tableBody.innerHTML = ""; // Clear existing rows
+
+                bills.forEach(bill => {
+                    const row = tableBody.insertRow();
+                    const cells = [bill.id, bill.bill_number, bill.name, bill.units, bill.amount, bill.status];
+                    cells.forEach(cellData => {
+                        const cell = row.insertCell();
+                        cell.textContent = cellData;
+                    });
+                    // Add delete button to the row
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteBill(bill.id); // Pass the bill ID to deleteBill function
+                    const actionCell = row.insertCell();
+                    actionCell.appendChild(deleteButton);
+
+                });
+            });
+        }
+
+        function updateStatus() {
+            const billId = document.getElementById("updateBillId").value;
+            const status = document.getElementById("updateStatus").value;
+
+            fetch('/update_status', { // Replace with your server endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ billId, status })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadBills();
+                    alert("Status updated successfully!");
+                } else {
+                    alert(data.message || "Error updating status.");
+                }
+            });
+        }
+         function deleteBill(billId) {
+             if (confirm("Are you sure you want to delete this bill?")) {
+                fetch('/delete_bill', { // Replace with your server endpoint
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ billId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadBills();
+                        alert("Bill deleted successfully!");
+                    } else {
+                        alert(data.message || "Error deleting bill.");
+                    }
+                });
+             }
+         }
+
+        window.onload = loadBills; // Load bills when the page loads
+    </script>
+</body>
+</html>

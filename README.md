@@ -10,6 +10,11 @@ This is a simple command-line based Electricity Bill Management System implement
 *   **Delete Bill:** Deletes a bill record from the database based on the bill ID.
 *   **Data Persistence:** Uses SQLite database to store bill information persistently.
 
+
+## Screenshot
+![Electricity Bill Management Screenshot](./images/Screenshot%20(92).png)
+
+
 ## How to Use
 
 1.  **Clone the Repository:** (If applicable, if you are hosting this on GitHub)

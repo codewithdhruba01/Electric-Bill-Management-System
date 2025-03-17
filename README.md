@@ -2,7 +2,7 @@
 
 This is a simple command-line based Electricity Bill Management System implemented in Python using SQLite for database management. It allows users to add new bill entries, view existing bills, update payment status, and delete bills.
 
-## Features
+## All the Features
 
 *   **Add Bill:** Adds a new electricity bill record to the database. It takes the bill number (9 digits), customer name, and units consumed as input. The bill amount is calculated based on a tiered pricing structure.
 *   **View Bills:** Displays all the electricity bills stored in the database, including their ID, bill number, customer name, units consumed, amount, and payment status.
@@ -68,3 +68,4 @@ def initialize_db():
                         status TEXT NOT NULL)''')
     conn.commit()
     conn.close()
+
